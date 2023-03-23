@@ -1,32 +1,36 @@
-import java.util.*;
+import java.io.*;
+import java.util.AbstractMap;
+import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-        /*
-        if (args.length != 1)
-            throw new IllegalArgumentException("You must provide exactly one argument");
+        Interpreter inter = new Interpreter();
 
-        File file = new File(args[0]);
-        if (!file.exists())
-            throw new IllegalArgumentException("File does not exist");
-         */
+        if (args.length == 1) { // Read from file
+            File file = getFile(args[0]);
 
-        Map<String, String> tokens = new HashMap<>();
+            try ( BufferedReader br = new BufferedReader(new FileReader(file)) ) {
+                String line; int lineNum = 0;
+                while ((line = br.readLine()) != null) {
+                    System.out.println("--- Interpreting line: " + lineNum++);
+                    List<AbstractMap.SimpleEntry<Token, String>> tokens = inter.lexer(line);
+                    tokens.forEach(p -> System.out.println(p.getKey() + " " + p.getValue()));
+                }
+            } catch (FileNotFoundException e) {
+                System.out.println("File not found: " + file.getAbsolutePath());
+                throw new RuntimeException(e);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        else { // REPL mode (from console input)
 
-        String code = "(+ (* 5 6) (+ (* 23 5) (+ 6 26)))";
+        }
+    }
 
-        code = code
-                .replaceAll("\\(", "\\( ")
-                .replaceAll("\\)", " \\)");
-
-        Arrays.stream(code.split(" "))
-                .forEach(token -> {
-                    if (token.equals("\\(")) tokens.put("OPEN", token);
-                    else if (token.equals("\\)")) tokens.put("CLOSE", token);
-                    else if (token.matches("\\d+")) tokens.put("NUMBER", token);
-                    else if (token.matches("\\+|\\*|")) tokens.put("OPERATOR", token);
-        });
-
-        tokens.forEach((k, v) -> System.out.println(k + " = " + v));
+    private static File getFile(String fileName) {
+        String path = Main.class.getResource(fileName).getFile();
+        System.out.println(path);
+        return new File(path.replace("%20", " "));
     }
 }
