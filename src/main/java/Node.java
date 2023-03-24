@@ -21,11 +21,7 @@ public class Node {
         }
 
         private void print(int depth) {
-            // FIXME something is broke here Breakpoint at Line 27
             System.out.println(" ".repeat(depth * 2) + operator);
-            if (lvalue == null || rvalue == null) {
-                System.out.println(" ".repeat((depth + 1) * 2) + "null");
-            }
             lvalue.print(depth + 1);
             rvalue.print(depth + 1);
         }

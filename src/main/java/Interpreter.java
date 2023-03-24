@@ -45,7 +45,11 @@ public class Interpreter {
 
             Node current = history.lastElement();
             if (token.equals(Token.OPEN)) {
-                history.push(new Node.Vertex());
+                Node.Vertex oldVertex = (Node.Vertex) current;
+                Node.Vertex newVertex = new Node.Vertex();
+                history.push(newVertex);
+                if (oldVertex.lvalue == null) oldVertex.lvalue = newVertex;
+                else oldVertex.rvalue = newVertex;
             }
             else if (token.equals(Token.CLOSE)) {
                 root = current;
