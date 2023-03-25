@@ -1,8 +1,13 @@
-import java.lang.constant.Constable;
-import java.util.AbstractMap;
+import util.Pair;
+
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 // AST node(s)
 public class Node {
+
+    private static final int intentDepthMultiplier = 3;
+
     public static class Vertex extends Node {
         public Token operator;
         public Node lvalue;
@@ -14,14 +19,8 @@ public class Node {
             this.rvalue = null;
         }
 
-        public Vertex(AbstractMap.SimpleEntry<Token, String> pair) {
-            this.operator = pair.getKey();
-            this.lvalue = null;
-            this.rvalue = null;
-        }
-
         private void print(int depth) {
-            System.out.println(" ".repeat(depth * 2) + operator);
+            System.out.println(" ".repeat(depth * intentDepthMultiplier) + operator);
             lvalue.print(depth + 1);
             rvalue.print(depth + 1);
         }
@@ -30,12 +29,12 @@ public class Node {
     public static class Leaf extends Node {
         public String value;
 
-        public Leaf(AbstractMap.SimpleEntry<Token, String> pair) {
-            this.value = pair.getValue();
+        public Leaf(String value) {
+            this.value = value;
         }
 
         private void print(int depth) {
-            System.out.println(" ".repeat(depth * 2) + value);
+            System.out.println(" ".repeat(depth * intentDepthMultiplier) + value);
         }
     }
 

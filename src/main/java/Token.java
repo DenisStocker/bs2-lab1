@@ -1,5 +1,3 @@
-import java.util.function.Function;
-
 public enum Token {
     OPEN("\\(", Rule.EXPECT_OPERATOR),
     CLOSE("\\)", Rule.EXPECT_CLOSE, Rule.EXPECT_OPEN, Rule.EXPECT_NUMBER),
@@ -22,13 +20,6 @@ public enum Token {
 
     public Rule[] getRules() {
         return rules;
-    }
-
-    public boolean applyRules(Token t) {
-        for (Rule rule : rules) {
-            if (rule.apply(t)) return true;
-        }
-        return false;
     }
 
     public boolean isOperator() {

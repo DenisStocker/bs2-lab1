@@ -1,3 +1,5 @@
+import util.Pair;
+
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -10,7 +12,7 @@ public class Interpreter {
     public Interpreter() {
     }
 
-    public List<AbstractMap.SimpleEntry<Token, String>> lexer(String input) {
+    public List<Pair<Token, String>> lexer(String input) {
         input = input
                 .replaceAll("\\(", "\\( ")
                 .replaceAll("\\)", " \\)");
@@ -20,27 +22,28 @@ public class Interpreter {
                 .collect(Collectors.toList());
     }
 
-    public Node parser(List<AbstractMap.SimpleEntry<Token, String>> tokens) {
+    public Node parser(List<Pair<Token, String>> tokens) {
         if (tokens.size() == 0) throw new RuntimeException("No tokens to parse");
         else if (tokens.size() == 1)
-            if (tokens.get(0).getKey().equals(Token.NUMBER)) return new Node.Leaf(tokens.get(0));
-            else throw new RuntimeException("Invalid token: " + tokens.get(0).getValue());
+            if (tokens.get(0).first().equals(Token.NUMBER)) return new Node.Leaf(tokens.get(0).second());
+            else throw new RuntimeException("Syntax error: Invalid token: " + tokens.get(0).second());
 
-        if (! Rule.EXPECT_OPEN.apply(tokens.get(0).getKey()))
-            throw new RuntimeException("Invalid token: " + tokens.get(0).getValue());
+        if (! Rule.EXPECT_OPEN.syntaxCheck(tokens.get(0).first()))
+            throw new RuntimeException("Syntax error: Invalid token: " + tokens.get(0).second());
 
         Node root = null;
-        Token previous = tokens.get(0).getKey();
+        Token previous = tokens.get(0).first();
         Stack<Node> history = new Stack<>();
+
         history.push(new Node.Vertex());
         tokens = tokens.subList(1, tokens.size());
-        for (AbstractMap.SimpleEntry<Token, String> entry : tokens) {
-            Token token = entry.getKey();
+        for (Pair<Token, String> entry : tokens) {
+            Token token = entry.first();
 
-            if (! previous.applyRules(token)) // Syntax error check
+            if (Stream.of(previous.getRules()).noneMatch(r -> r.syntaxCheck(token))) // Syntax error check
                 throw new RuntimeException(String.format(
-                        "Invalid token '%s' %s after %s with rules: %s",
-                        entry.getValue(), entry.getKey(), previous, Arrays.toString(token.getRules())
+                        "Syntax error: Invalid token '%s' %s after %s with rules: %s",
+                        entry.second(), entry.first(), previous, Arrays.toString(token.getRules())
                 ));
 
             Node current = history.lastElement();
@@ -60,32 +63,65 @@ public class Interpreter {
             }
             else if (token.equals(Token.NUMBER)) {
                 Node.Vertex vertex = (Node.Vertex) current;
-                if (vertex.lvalue == null) vertex.lvalue = new Node.Leaf(entry);
-                else vertex.rvalue = new Node.Leaf(entry);
-                // TODO might need to check if rvalue is null
+                if (vertex.lvalue == null) vertex.lvalue = new Node.Leaf(entry.second());
+                else vertex.rvalue = new Node.Leaf(entry.second());
             }
-            else throw new RuntimeException("Unexpected token: " + entry.getValue());
-
+            else throw new RuntimeException("Unexpected token: " + entry.second());
             previous = token;
         }
         if (root == null) throw new RuntimeException("Abstract Syntax Tree root node is null");
         return root;
     }
 
+    public void emit_text(Node root) {
+        List<Pair<Code, String>> code = generator(root);
+        //emit(code, (Pair<Code, String> p) -> p.first().toString() + " " + p.second());
+    }
+
+    public void emit_bin(Node root) {
+        List<Pair<Code, String>> code = generator(root);
+        emit(code, (Pair<Code, String> p) -> p.first().instruction + " " + (byte) Integer.parseInt(p.second()));
+    }
+
+
 
     /* Private helper and util methods */
-
-    private AbstractMap.SimpleEntry<Token, String> match(String input) {
-        return tokens.stream()
-                .filter(token -> input.matches(token.getRegex()))
-                .findFirst()
-                .map(token -> new AbstractMap.SimpleEntry<>(token, input))
-                .orElseThrow(() -> new RuntimeException("No match found for: " + input));
-    }
 
     public void printAST(Node root) {
         if (root != null)
             root.print();
+    }
+
+    private Pair<Token, String> match(String input) {
+        return tokens.stream()
+                .filter(token -> input.matches(token.getRegex()))
+                .findFirst()
+                .map(token -> new Pair<>(token, input))
+                .orElseThrow(() -> new RuntimeException("No match found for: " + input));
+    }
+
+    private List<Pair<Code, String>> generator(Node root) {
+        if (root.getClass() == Node.Leaf.class) {
+            Node.Leaf leaf = (Node.Leaf) root;
+            return List.of(new Pair<>(Code.CONST, leaf.value));
+        }
+
+        List<Pair<Code, String>> code = new ArrayList<>();
+        Stack<Node.Vertex> stack = new Stack<>();
+        stack.push((Node.Vertex) root);
+
+        // TODO - Implement generator
+
+        code.add(new Pair<>(Code.PRINT, null));
+        //code.forEach(p -> System.out.println(p.first() + " " + p.second()));
+        return code;
+    }
+
+    private void emit(List<Pair<Code, String>> code, Function<Pair<Code, String>, String> mapper) {
+        if (code == null) return;
+        code.stream()
+                .map(mapper)
+                .forEach(System.out::println);
     }
 
 }

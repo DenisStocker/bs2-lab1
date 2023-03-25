@@ -1,6 +1,7 @@
+import util.Pair;
+
 import java.io.*;
 import java.net.URL;
-import java.util.AbstractMap;
 import java.util.List;
 
 public class Main {
@@ -11,13 +12,15 @@ public class Main {
             File file = getFile(args[0]);
 
             try ( BufferedReader br = new BufferedReader(new FileReader(file)) ) {
-                String line; int lineNum = 0;
+                String line; int lineNum = 1;
                 while ((line = br.readLine()) != null) {
-                    System.out.println("--- Interpreting line: " + lineNum++);
-                    List<AbstractMap.SimpleEntry<Token, String>> tokens = inter.lexer(line);
-                    //tokens.forEach(p -> System.out.println(p.getKey() + " " + p.getValue())); // FIXME debug code
+                    List<Pair<Token, String>> tokens = inter.lexer(line);
                     Node root = inter.parser(tokens);
-                    inter.printAST(root);
+                    inter.emit_text(root);
+                    // Debug code, remove comment to get output
+                    System.out.println("--- Interpreting line: " + lineNum++); // Print line number
+                    //tokens.forEach(p -> System.out.println(p.first() + " " + p.second())); // Print tokens
+                    inter.printAST(root); // Print AST
                 }
             } catch (FileNotFoundException e) {
                 System.out.println("File not found: " + file.getAbsolutePath());

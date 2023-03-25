@@ -12,7 +12,7 @@ public enum Rule {
         this.rule = rule;
     }
 
-    public boolean apply(Token t) {
+    public boolean syntaxCheck(Token t) {
         return rule.apply(t);
     }
 }
